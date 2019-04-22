@@ -1,6 +1,12 @@
 var express = require('express');
 var router = express.Router();
 var bcrypt = require('bcryptjs');
+var jwt = require('jsonwebtoken');
+var keys = require('../../config/keys');
+var passport = require ('passport');
+
+// load imput validation
+var validateRegisterinput = require ('../../validation/register');
 
 // load user model
 var User = require('../../models/User');
@@ -16,6 +22,14 @@ router.get('/test', (req, res) => res.json({
 // @desc test register route
 // @access Public
 router.post('/register', (req, res) => {
+var { errors, isValid } = validateRegisterinput(req.body);
+
+
+// check validation
+if(!isValid) {
+  return res.status(400).json(errors)
+}
+
   User.findOne({
       email: req.body.email
     })
@@ -62,9 +76,24 @@ router.post('/login', (req, res) => {
     }
     bcrypt.compare(password, user.password).then(isMatch => {
       if (isMatch) {
-        res.json({
-          msg: 'Success'
-        });
+        // user matchet
+        var payload = {
+          id: user.id,
+          name: user.name
+        }
+
+        // sign token
+        jwt.sign(
+          payload, keys.secretOrKey, {
+            expiresIn: 3600
+          },
+          (err, token) => {
+            res.json({
+              sucess: true,
+              token: 'Bearer ' + token
+            });
+          }
+        );
       } else {
         return res.status(400).json({
           password: 'Password Incorrect'
@@ -73,5 +102,12 @@ router.post('/login', (req, res) => {
     });
   });
 });
+
+// @route api/user/current 
+// @desc return current user
+// @access Private
+router.get('/current', passport.authenticate('jwt', {session: false}), (req, res) => {
+  res.json(user)
+})
 
 module.exports = router;
