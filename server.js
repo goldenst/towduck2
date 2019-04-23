@@ -3,7 +3,7 @@ var mongoose = require ('mongoose');
 var bodyParser = require ('body-parser');
 var passport = require ('passport');
 
-var users = require('./routes/api/users');
+var user = require('./routes/api/users');
 var profile = require('./routes/api/profile');
 var posts = require('./routes/api/posts');
 
@@ -28,7 +28,7 @@ app.use(passport.initialize());
 require('./config/passport')(passport);
 
 // use routes
-app.use('/api/users', users);
+app.use('/api/users', user);
 app.use('/api/profile', profile);
 app.use('/api/posts', posts);
 
